@@ -1,0 +1,99 @@
+<!--   https://jsfiddle.net/LoonCode/swhb1yxt/  -->
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>select2</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/3.5.2/select2.min.css"  rel="stylesheet"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-alpha/css/bootstrap.min.css"  rel="stylesheet"/>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/3.5.2/select2.min.js" type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-alpha/js/bootstrap.min.js" type="text/javascript"></script>
+    <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.0.0-alpha1/jquery.min.js" type="text/javascript"></script>-->
+    <script src="https://code.jquery.com/jquery-2.1.4.min.js" type="text/javascript"></script>
+
+
+
+    <style>
+        body {
+            margin: 10px;
+        }
+    </style>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+            $("#e6").select2({
+                placeholder: "Search for a repository",
+                minimumInputLength: 1,
+                ajax: { // instead of writing the function to execute the request we use Select2's convenient helper
+                    url: "https://api.github.com/search/repositories",
+                    dataType: 'json',
+                    quietMillis: 250,
+                    data: function (term, page) {
+                        return {
+                            q: term // search term
+                        };
+                    },
+                    results: function (data, page) { // parse the results into the format expected by Select2.
+                        // since we are using custom formatting functions we do not need to alter the remote JSON data
+                        return {results: data.items};
+                    },
+                    cache: true
+                },
+                initSelection: function (element, callback) {
+                    // the input tag has a value attribute preloaded that points to a preselected repository's id
+                    // this function resolves that id attribute to an object that select2 can render
+                    // using its formatResult renderer - that way the repository name is shown preselected
+                    var id = $(element).val();
+                    if (id !== "") {
+                        $.ajax("https://api.github.com/repositories/" + id, {
+                            dataType: "json"
+                        }).done(function (data) {
+                            callback(data);
+                        });
+                    }
+                },
+                formatResult: repoFormatResult, // omitted for brevity, see the source of this page
+                formatSelection: repoFormatSelection,  // omitted for brevity, see the source of this page
+                dropdownCssClass: "bigdrop", // apply css that makes the dropdown taller
+                escapeMarkup: function (m) {
+                    return m;
+                } // we do not want to escape markup since we are displaying html in results
+            });
+
+
+        });
+
+
+
+
+        function repoFormatResult(repo) {
+            var markup = '<div class="row-fluid">' +
+                    '<div class="span2"><img src="' + repo.owner.avatar_url + '" /></div>' +
+                    '<div class="span10">' +
+                    '<div class="row-fluid">' +
+                    '<div class="span6">' + repo.full_name + '</div>' +
+                    '<div class="span3"><i class="fa fa-code-fork"></i> ' + repo.forks_count + '</div>' +
+                    '<div class="span3"><i class="fa fa-star"></i> ' + repo.stargazers_count + '</div>' +
+                    '</div>';
+
+            if (repo.description) {
+                markup += '<div>' + repo.description + '</div>';
+            }
+
+            markup += '</div></div>';
+
+            return markup;
+        }
+
+        function repoFormatSelection(repo) {
+            return repo.full_name;
+        }
+    </script>
+
+</head>
+<body>
+<input type="hidden" class="bigdrop" id="e6" style="width:600px" value="3620194" />
+</body>
+</html>
